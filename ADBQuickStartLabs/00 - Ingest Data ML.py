@@ -1,7 +1,7 @@
 # Databricks notebook source
 # DBTITLE 1,Delete existing files
 # delete the old database and tables if needed
-_ = spark.sql('DROP DATABASE IF EXISTS kkbox CASCADE')
+_ = spark.sql('DROP DATABASE IF EXISTS bronze CASCADE')
 
 # drop any old delta lake files that might have been created
 dbutils.fs.rm('/mnt/bronze', recurse=True)
@@ -14,7 +14,7 @@ dbutils.fs.rm('/mnt/silver/churndata', recurse=True)
 dbutils.fs.rm('/mnt/silver/trainingdata', recurse=True)
 dbutils.fs.rm('/mnt/gold/scoreddata', recurse=True)
 # create database to house SQL tables
-_ = spark.sql('CREATE DATABASE kkbox')
+_ = spark.sql('CREATE DATABASE bronze')
 
 # COMMAND ----------
 
@@ -37,7 +37,7 @@ transactions = (
   spark
     .read
     .csv(
-      '/mnt/transactions_v2.csv',
+      '/mnt/landing/transactions_v2.csv',
       schema=transaction_schema,
       header=True,
       dateFormat='yyyyMMdd'
@@ -55,7 +55,7 @@ transactions = (
 
 # create table object to make delta lake queriable
 spark.sql('''
-  CREATE TABLE kkbox.transactions
+  CREATE TABLE bronze.transactions
   USING DELTA 
   LOCATION '/mnt/bronze/transactions'
   ''')
@@ -78,7 +78,7 @@ members = (
   spark
     .read
     .csv(
-      'dbfs:/mnt/adbquickstart/members/members_v3.csv',
+      'dbfs:/mnt/landing/members_v3.csv',
       schema=member_schema,
       header=True,
       dateFormat='yyyyMMdd'
@@ -91,14 +91,14 @@ members = (
     .write
     .format('delta')
     .mode('overwrite')
-    .save('/mnt/adbquickstart/bronze/members')
+    .save('/mnt/bronze/members')
   )
 
 # create table object to make delta lake queriable
 spark.sql('''
-  CREATE TABLE kkbox.members 
+  CREATE TABLE bronze.members 
   USING DELTA 
-  LOCATION '/mnt/adbquickstart/bronze/members'
+  LOCATION '/mnt/bronze/members'
   ''')
 
 # COMMAND ----------
@@ -121,7 +121,7 @@ user_log = (
   spark
     .read
     .csv(
-      'dbfs:/mnt/adbquickstart/user_logs/user_logs_v2.csv',
+      'dbfs:/mnt/landing/user_logs_v2.csv',
       schema=log_schema,
       header=True,
       dateFormat='yyyyMMdd'
@@ -133,14 +133,14 @@ user_log = (
     .write
     .format('delta')
     .mode('overwrite')
-    .save('/mnt/adbquickstart/bronze/user_log')
+    .save('/mnt/bronze/user_log')
   )
 
 # create table object to make delta lake queriable
 spark.sql('''
-  CREATE TABLE kkbox.user_log 
+  CREATE TABLE bronze.user_log 
   USING DELTA 
-  LOCATION '/mnt/adbquickstart/bronze/user_log'
+  LOCATION '/mnt/bronze/user_log'
   ''')
 
 # COMMAND ----------
@@ -157,7 +157,7 @@ train = (
   spark
     .read
     .csv(
-      'dbfs:/mnt/adbquickstart/train_v2.csv',
+      'dbfs:/mnt/landing/train_v2.csv',
       schema=train_schema,
       header=True
       )
@@ -169,14 +169,14 @@ train = (
     .write
     .format('delta')
     .mode('overwrite')
-    .save('/mnt/adbquickstart/bronze/train')
+    .save('/mnt/bronze/train')
   )
 
 # create table object to make delta lake queriable
 spark.sql('''
-  CREATE TABLE kkbox.churn 
+  CREATE TABLE bronze.churn 
   USING DELTA 
-  LOCATION '/mnt/adbquickstart/bronze/train'
+  LOCATION '/mnt/bronze/train'
   ''')
 
 # COMMAND ----------
