@@ -64,7 +64,7 @@ transactions = (
   spark
     .read
     .csv(
-      '/mnt/transactions_v2.csv',
+      '/mnt/landing/transactions_v2.csv',
       schema=transaction_schema,
       header=True,
       dateFormat='yyyyMMdd'
