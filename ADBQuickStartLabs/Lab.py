@@ -89,19 +89,23 @@ spark.sql('''
 
 # COMMAND ----------
 
+_ = spark.sql('CREATE DATABASE bronze')
+
+# COMMAND ----------
+
 # DBTITLE 1,Delete existing files
 #import shutil
 # pyspark.sql.types import *
 # delete the old database and tables if needed
-_ = spark.sql('DROP DATABASE IF EXISTS bronze CASCADE')
+#_ = spark.sql('DROP DATABASE IF EXISTS bronze CASCADE')
 
 # drop any old delta lake files that might have been created
-dbutils.fs.rm('/mnt/adbquickstart/bronze', recurse=True)
-dbutils.fs.rm('/mnt/adbquickstart/gold', recurse=True)
-dbutils.fs.rm('/mnt/adbquickstart/silver', recurse=True)
-dbutils.fs.rm('/mnt/adbquickstart/checkpoint', recurse=True)
+#dbutils.fs.rm('/mnt/bronze', recurse=True)
+#dbutils.fs.rm('/mnt/gold', recurse=True)
+#dbutils.fs.rm('/mnt/silver', recurse=True)
+#dbutils.fs.rm('/mnt/checkpoint', recurse=True)
 # create database to house SQL tables
-_ = spark.sql('CREATE DATABASE kkbox')
+#_ = spark.sql('CREATE DATABASE bronze')
 
 # COMMAND ----------
 
