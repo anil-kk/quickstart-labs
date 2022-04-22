@@ -15,12 +15,12 @@ import matplotlib.ticker as mtick
 
 #import the necessary libraries
 import os
-import mlflow
+#import mlflow
 from pyspark.ml.regression import GeneralizedLinearRegression,RandomForestRegressor
 from pyspark.ml import Pipeline
 from pyspark.ml.classification import RandomForestClassifier, LogisticRegression, GBTClassifier
 from pyspark.ml.feature import VectorAssembler, StringIndexer, VectorIndexer, MinMaxScaler, VectorIndexer,StandardScaler,IndexToString
 from pyspark.ml.evaluation import BinaryClassificationEvaluator, RegressionEvaluator, MulticlassClassificationEvaluator
 from pyspark.ml import Pipeline
-from databricks.feature_store import FeatureStoreClient
-from databricks.feature_store import feature_table
+#from databricks.feature_store import FeatureStoreClient
+#from databricks.feature_store import feature_table

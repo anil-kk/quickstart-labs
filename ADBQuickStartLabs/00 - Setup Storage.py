@@ -1,23 +1,34 @@
 # Databricks notebook source
-dbutils.widgets.text("ACCOUNT_KEY", "", "ACCOUNT_KEY")
-dbutils.widgets.text("BLOB_CONTAINER", "", "BLOB_CONTAINER")
-dbutils.widgets.text("BLOB_ACCOUNT", "", "BLOB_ACCOUNT")
+dbutils.widgets.text("ACCOUNT-KEY", "", "ACCOUNT-KEY")
+dbutils.widgets.text("BLOB-CONTAINER", "", "BLOB-CONTAINER")
+dbutils.widgets.text("BLOB-ACCOUNT-NAME", "", "BLOB-ACCOUNT-NAME")
 
 # COMMAND ----------
 
-BLOB_CONTAINER = dbutils.widgets.get("BLOB_CONTAINER")
-BLOB_ACCOUNT = dbutils.widgets.get("BLOB_ACCOUNT")
-ACCOUNT_KEY = dbutils.widgets.get("ACCOUNT_KEY")
+BLOB_CONTAINER = dbutils.widgets.get("BLOB-CONTAINER")
+BLOB_ACCOUNT = dbutils.widgets.get("BLOB-ACCOUNT-NAME")
+ACCOUNT_KEY = dbutils.widgets.get("ACCOUNT-KEY")
 
 # COMMAND ----------
 
-print(BLOB_ACCOUNT)
+# MAGIC %md
+# MAGIC # Read sensitive values from Azure Key Vault / Secret Scope
+
+# COMMAND ----------
+
+BLOB_CONTAINER  = dbutils.secrets.get(scope = "scope-storage-adb", key = "BLOB-CONTAINER")
+BLOB_ACCOUNT = dbutils.secrets.get(scope = "scope-storage-adb", key = "BLOB-ACCOUNT-NAME")
+ACCOUNT_KEY = dbutils.secrets.get(scope = "scope-storage-adb", key = "ACCOUNT-KEY")
+
+# COMMAND ----------
+
+print(BLOB_CONTAINER)
 
 # COMMAND ----------
 
 # DBTITLE 1,Run this step only if you are re-running the notebook
 try:
-    dbutils.fs.unmount("/mnt/adbquickstart")
+    dbutils.fs.unmount("/mnt")
 except:
   print("The storage isn't mounted so there is nothing to unmount.")
 
@@ -31,11 +42,10 @@ except:
 
 # COMMAND ----------
 
-DIRECTORY = "/"
-MOUNT_PATH = "/mnt/adbquickstart"
+MOUNT_PATH = "/mnt"
 
 dbutils.fs.mount(
-  source = f"wasbs://{BLOB_CONTAINER}@{BLOB_ACCOUNT}.blob.core.windows.net/KKBox-Dataset-orig/",
+  source = f"wasbs://{BLOB_CONTAINER}@{BLOB_ACCOUNT}.blob.core.windows.net",
   mount_point = MOUNT_PATH,
   extra_configs = {
     f"fs.azure.account.key.{BLOB_ACCOUNT}.blob.core.windows.net":ACCOUNT_KEY
