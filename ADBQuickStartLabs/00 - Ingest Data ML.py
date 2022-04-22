@@ -4,15 +4,15 @@
 _ = spark.sql('DROP DATABASE IF EXISTS kkbox CASCADE')
 
 # drop any old delta lake files that might have been created
-dbutils.fs.rm('/mnt/adbquickstart/bronze', recurse=True)
-dbutils.fs.rm('/mnt/adbquickstart/gold', recurse=True)
-dbutils.fs.rm('/mnt/adbquickstart/silver', recurse=True)
-dbutils.fs.rm('/mnt/adbquickstart/checkpoint', recurse=True)
+dbutils.fs.rm('/mnt/bronze', recurse=True)
+dbutils.fs.rm('/mnt/gold', recurse=True)
+dbutils.fs.rm('/mnt/silver', recurse=True)
+dbutils.fs.rm('/mnt/checkpoint', recurse=True)
 
-dbutils.fs.rm('/mnt/adbquickstart/silver/member_feature', recurse=True)
-dbutils.fs.rm('/mnt/adbquickstart/silver/churndata', recurse=True)
-dbutils.fs.rm('/mnt/adbquickstart/silver/trainingdata', recurse=True)
-dbutils.fs.rm('/mnt/adbquickstart/gold/scoreddata', recurse=True)
+dbutils.fs.rm('/mnt/silver/member_feature', recurse=True)
+dbutils.fs.rm('/mnt/silver/churndata', recurse=True)
+dbutils.fs.rm('/mnt/silver/trainingdata', recurse=True)
+dbutils.fs.rm('/mnt/gold/scoreddata', recurse=True)
 # create database to house SQL tables
 _ = spark.sql('CREATE DATABASE kkbox')
 
@@ -37,7 +37,7 @@ transactions = (
   spark
     .read
     .csv(
-      '/mnt/adbquickstart/transactions_v2.csv',
+      '/mnt/transactions_v2.csv',
       schema=transaction_schema,
       header=True,
       dateFormat='yyyyMMdd'
@@ -50,14 +50,14 @@ transactions = (
     .format('delta')
     .partitionBy('transaction_date')
     .mode('overwrite')
-    .save('/mnt/adbquickstart/bronze/transactions')
+    .save('/mnt/bronze/transactions')
   )
 
 # create table object to make delta lake queriable
 spark.sql('''
   CREATE TABLE kkbox.transactions
   USING DELTA 
-  LOCATION '/mnt/adbquickstart/bronze/transactions'
+  LOCATION '/mnt/bronze/transactions'
   ''')
 
 # COMMAND ----------
