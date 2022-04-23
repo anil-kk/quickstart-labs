@@ -495,7 +495,7 @@ display(merge_table)
 # COMMAND ----------
 
 # DBTITLE 1,Generate a new "usage" column in a dummy table
-member_dummy = sql("SELECT years, count, CAST(rand(10) * 10 * count AS double) AS usage FROM kkbox.members_gold")
+member_dummy = sql("SELECT years, count, CAST(rand(10) * 10 * count AS double) AS usage FROM gold.members_gold")
 display(member_dummy)
 
 # COMMAND ----------
@@ -503,12 +503,12 @@ display(member_dummy)
 # DBTITLE 1,Merge it to the delta table
 # MAGIC %python
 # MAGIC # Add the mergeSchema option
-# MAGIC member_dummy.write.option("mergeSchema","true").format("delta").mode("append").save('/mnt/adbquickstart/gold/members/')
+# MAGIC member_dummy.write.option("mergeSchema","true").format("delta").mode("append").save('/mnt/gold/members/')
 
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC select * from kkbox.members_gold
+# MAGIC select * from gold.members_gold
 
 # COMMAND ----------
 
