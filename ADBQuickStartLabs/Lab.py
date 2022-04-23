@@ -95,7 +95,7 @@ _ = spark.sql('CREATE DATABASE bronze')
 # COMMAND ----------
 
 # DBTITLE 1,Use this only to create some file/directory in mounted Azure storage
-dbutils.fs.put("/mnt/landing/hello_db.txt", "Hello, Databricks!", True)
+dbutils.fs.put("/mnt/landing/members/hello_db.txt", "Hello, Databricks!", True)
 
 # COMMAND ----------
 
@@ -230,11 +230,12 @@ spark.sql('''
 # DBTITLE 1,Prep Members Dataset - Ingest via Autoloader
 # "cloudFiles" indicates the use of Auto Loader
 
-dfBronze = spark.readStream.format("cloudFiles") \
+dfBronze = spark.readStream \
+  .format("cloudFiles") \
   .option('cloudFiles.format', 'csv') \
   .option('header','true') \
   .schema('msno string, city int, bd int, gender string ,registered_via int , registration_init_time string') \
-  .load("/mnt/adbquickstart/members/")
+  .load("/mnt/landing/members/")
 
 #.option("cloudFiles.schemaLocation", "/mnt/adbquickstart/schema/members") \
 
@@ -243,25 +244,31 @@ dfBronze = spark.readStream.format("cloudFiles") \
 dfBronze.writeStream \
   .format("delta") \
   .trigger(once=True) \
-  .option("checkpointLocation", "/mnt/adbquickstart/checkpoint/members") \
-  .start("/mnt/adbquickstart/bronze/members")
+  .option("checkpointLocation", "/mnt/checkpoint/members") \
+  .start("/mnt/bronze/members")
 
 # COMMAND ----------
 
 # DBTITLE 1,Cool.. Lets see if we could see the files in the member delta folder
-# MAGIC %fs ls /mnt/adbquickstart/bronze/members/
+# MAGIC %fs ls /mnt/bronze/members/
 
 # COMMAND ----------
 
+dbutils.fs.cp('/mnt/landing/members_v3.csv','/mnt/landing/members/')
+
+# COMMAND ----------
+
+# DBTITLE 1,Create a queryable table from DELTA location
 # MAGIC %sql
-# MAGIC CREATE TABLE kkbox.members
+# MAGIC CREATE TABLE bronze.members
 # MAGIC USING DELTA 
-# MAGIC LOCATION '/mnt/adbquickstart/bronze/members'
+# MAGIC LOCATION '/mnt/bronze/members'
 
 # COMMAND ----------
 
+# DBTITLE 1,Query Delta Table
 # MAGIC %sql
-# MAGIC select * from kkbox.members
+# MAGIC SELECT * FROM bronze.members
 
 # COMMAND ----------
 
@@ -270,31 +277,36 @@ dfBronze.writeStream \
 
 # COMMAND ----------
 
+dbutils.fs.put('/mnt/landing/user_logs/temp.txt','temp',True)
+dbutils.fs.cp('/mnt/landing/user_logs_v2.csv', '/mnt/landing/user_logs/')
+
+# COMMAND ----------
+
 # MAGIC %sql
-# MAGIC COPY INTO delta.`/mnt/adbquickstart/bronze/user_log/`
-# MAGIC     FROM '/mnt/adbquickstart/user_logs/'
+# MAGIC COPY INTO delta.`/mnt/bronze/user_log/`
+# MAGIC     FROM '/mnt/landing/user_logs/'
 # MAGIC     FILEFORMAT = CSV
 # MAGIC     FORMAT_OPTIONS('header' = 'true')
 
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC CREATE TABLE kkbox.user_log
+# MAGIC CREATE TABLE bronze.user_log
 # MAGIC USING DELTA 
-# MAGIC LOCATION '/mnt/adbquickstart/bronze/user_log'
+# MAGIC LOCATION '/mnt/bronze/user_log'
 
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC SELECT * FROM kkbox.user_log
+# MAGIC SELECT * FROM bronze.user_log
 
 # COMMAND ----------
 
 # DBTITLE 1,Great !!! Now lets read the data and see if everything went well.
 ## Read the Bronze Data
-transactions_bronze = spark.read.format("delta").load('/mnt/adbquickstart/bronze/transactions/')
-members_bronze = spark.read.format("delta").load('/mnt/adbquickstart/bronze/members/')
-user_logs_bronze = spark.read.format("delta").load('/mnt/adbquickstart/bronze/user_log/')
+transactions_bronze = spark.read.format("delta").load('/mnt/bronze/transactions/')
+members_bronze = spark.read.format("delta").load('/mnt/bronze/members/')
+user_logs_bronze = spark.read.format("delta").load('/mnt/bronze/user_log/')
 
 # COMMAND ----------
 
