@@ -564,12 +564,12 @@ display(member_dummy)
 
 # COMMAND ----------
 
-# MAGIC %fs ls '/mnt/adbquickstart/gold/members/'
+# MAGIC %fs ls '/mnt/gold/members/'
 
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC SELECT * FROM table_changes('kkbox.members_gold', 1)
+# MAGIC SELECT * FROM table_changes('gold.members_gold', 1)
 
 # COMMAND ----------
 
@@ -580,7 +580,7 @@ display(member_dummy)
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC CREATE TABLE kkbox.members_new
+# MAGIC CREATE TABLE gold.members_new
 # MAGIC ( ID BIGINT GENERATED ALWAYS AS IDENTITY,
 # MAGIC   years STRING, 
 # MAGIC   count LONG
@@ -590,7 +590,7 @@ display(member_dummy)
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC INSERT INTO kkbox.members_new (years, count) TABLE member_gold
+# MAGIC INSERT INTO gold.members_new (years, count) TABLE member_gold
 
 # COMMAND ----------
 
@@ -602,7 +602,7 @@ display(member_dummy)
 
 # DBTITLE 1,Let's look at the identity column
 # MAGIC %sql 
-# MAGIC select * from kkbox.members_new;
+# MAGIC select * from gold.members_new;
 
 # COMMAND ----------
 
