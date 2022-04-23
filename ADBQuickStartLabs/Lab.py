@@ -83,6 +83,8 @@ from pyspark.ml import Pipeline
 # DBTITLE 1,Run this cell for cleaning storage/ fresh start
 # delete the old database and tables if needed
 _ = spark.sql('DROP DATABASE IF EXISTS bronze CASCADE')
+_ = spark.sql('DROP DATABASE IF EXISTS silver CASCADE')
+_ = spark.sql('DROP DATABASE IF EXISTS gold CASCADE')
 
 # drop any old delta lake files that might have been created
 dbutils.fs.rm('/mnt/bronze', recurse=True)
@@ -91,6 +93,12 @@ dbutils.fs.rm('/mnt/silver', recurse=True)
 dbutils.fs.rm('/mnt/checkpoint', recurse=True)
 # create database to house SQL tables
 _ = spark.sql('CREATE DATABASE bronze')
+_ = spark.sql('CREATE DATABASE silver')
+_ = spark.sql('CREATE DATABASE gold')
+
+# COMMAND ----------
+
+
 
 # COMMAND ----------
 
@@ -332,12 +340,12 @@ members_gold.createOrReplaceTempView("member_gold")
 #Save our Gold table in Delta format and Enable CDC on the Delta Table
 
 # members_gold.write.format('delta').mode('overwrite').save('/mnt/adbquickstart/gold/members/')
-members_gold.write.format('delta').mode('overwrite').option('path', '/mnt/adbquickstart/gold/members/').saveAsTable('kkbox.members_gold')
+members_gold.write.format('delta').mode('overwrite').option('path', '/mnt/gold/members/').saveAsTable('gold.members_gold')
 
 spark.sql('''
-  CREATE TABLE IF NOT EXISTS kkbox.members_gold
+  CREATE TABLE IF NOT EXISTS gold.members_gold
   USING DELTA 
-  LOCATION '/mnt/adbquickstart/gold/members/'
+  LOCATION '/mnt/gold/members/'
   ''')
 
 display(members_gold)
