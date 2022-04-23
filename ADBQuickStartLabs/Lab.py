@@ -612,7 +612,7 @@ display(member_dummy)
 
 # COMMAND ----------
 
-# MAGIC %sql OPTIMIZE kkbox.user_log ZORDER BY (date)
+# MAGIC %sql OPTIMIZE bronze.user_log ZORDER BY (date)
 
 # COMMAND ----------
 
@@ -623,4 +623,4 @@ display(member_dummy)
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC ANALYZE TABLE kkbox.user_log COMPUTE STATISTICS;
+# MAGIC ANALYZE TABLE bronze.user_log COMPUTE STATISTICS;
