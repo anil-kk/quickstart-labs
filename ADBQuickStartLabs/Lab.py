@@ -202,7 +202,7 @@ spark.sql('''
 # COMMAND ----------
 
 # DBTITLE 1,Let's look at the Delta Files
-# MAGIC %fs ls /mnt/adbquickstart/bronze/transactions
+# MAGIC %fs ls /mnt/bronze/transactions
 
 # COMMAND ----------
 
