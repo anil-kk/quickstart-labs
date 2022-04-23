@@ -533,7 +533,7 @@ display(member_dummy)
 
 # DBTITLE 1,Review Delta Lake Table History
 # MAGIC %sql
-# MAGIC DESCRIBE HISTORY kkbox.members_gold
+# MAGIC DESCRIBE HISTORY gold.members_gold
 
 # COMMAND ----------
 
