@@ -1,7 +1,7 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # Azure Databricks Quickstart for Data Engineers
-# MAGIC Welcome to the quickstart lab for data engineers on Azure Databricks! Over the course of this notebook, you will use a real-world dataset and learn how to:
+# MAGIC # Azure Databricks Labs
+# MAGIC Welcome to the on Azure Databricks! Over the course of this notebook, you will use a real-world dataset and learn how to:
 # MAGIC 1. Access your enterprise data lake in Azure using Databricks
 # MAGIC 2. Transform and store your data in a reliable and performant Delta Lake
 # MAGIC 3. Use Update,Delete,Merge,Schema Evolution and Time Travel Capabilities, CDF (Change Data Feed) of Delta Lake
@@ -12,40 +12,101 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ##Initial Set-up
+# MAGIC ##Scope Secrets & Azure Key Vault 
 # MAGIC 
-# MAGIC ### Enter the Blob_Container , Blob_Account and Account_Key for the Cloudlabs Environment
+# MAGIC ### Read the Blob_Container , Blob_Account and Account_Key for the Cloudlabs Environment from Azure Key Vault via Scope secrets
 
 # COMMAND ----------
 
-dbutils.widgets.text("ACCOUNT_KEY", "", "ACCOUNT_KEY")
-dbutils.widgets.text("BLOB_CONTAINER", "", "BLOB_CONTAINER")
-dbutils.widgets.text("BLOB_ACCOUNT", "", "BLOB_ACCOUNT")
+BLOB_CONTAINER  = dbutils.secrets.get(scope = "scope-storage-adb", key = "LH-BLOB-CONTAINER")
+BLOB_ACCOUNT = dbutils.secrets.get(scope = "scope-storage-adb", key = "LH-BLOB-ACCOUNT-NAME")
+ACCOUNT_KEY = dbutils.secrets.get(scope = "scope-storage-adb", key = "LH-ACCOUNT-KEY")
 
 # COMMAND ----------
 
-BLOB_CONTAINER = dbutils.widgets.get("BLOB_CONTAINER")
-BLOB_ACCOUNT = dbutils.widgets.get("BLOB_ACCOUNT")
-ACCOUNT_KEY = dbutils.widgets.get("ACCOUNT_KEY")
+# DBTITLE 1,Run this step only if you are re-running the notebook 
+try:
+    dbutils.fs.unmount("/mnt")
+except:
+  print("The storage isn't mounted so there is nothing to unmount.")
 
 # COMMAND ----------
 
-# MAGIC %run "../ADBQuickStartLabs/00 - Setup Storage"
+# MAGIC %md
+# MAGIC ### Mounting Azure Storage using an Access Key
+# MAGIC mount an Azure blob storage container to the workspace using a shared Access Key. More instructions can be found [here](https://docs.microsoft.com/en-us/azure/databricks/data/data-sources/azure/azure-storage#--mount-azure-blob-storage-containers-to-dbfs). 
+# MAGIC 
+# MAGIC #####Note: For this Demo we are using access Key and mounting the blob on DBFS. Ideally one should authenticate using Service Principal and use full abfss path to access data
 
 # COMMAND ----------
 
-# DBTITLE 1,Mount Blob Storage to DBFS
-#run = dbutils.notebook.run('ADBQuickStartLabs/00 - Setup Storage', 60, {"BLOB-CONTAINER" : BLOB_CONTAINER,"BLOB-ACCOUNT" : BLOB_ACCOUNT,"ACCOUNT-KEY" : ACCOUNT_KEY })
+# DBTITLE 1,Mount Azure Blob Storage to DBFS
+MOUNT_PATH = "/mnt"
 
-#%run "../ADBQuickStartLabs/00 - Setup Storage"
+dbutils.fs.mount(
+  source = f"wasbs://{BLOB_CONTAINER}@{BLOB_ACCOUNT}.blob.core.windows.net",
+  mount_point = MOUNT_PATH,
+  extra_configs = {
+    f"fs.azure.account.key.{BLOB_ACCOUNT}.blob.core.windows.net":ACCOUNT_KEY
+  }
+)
 
 # COMMAND ----------
 
-# DBTITLE 1,Install libraries
-# MAGIC %run "../ADBQuickStartLabs/00 - Libraries Setup"
+# DBTITLE 1,Import libraries
+import shutil
+from pyspark.sql.types import *
+from pyspark.sql.functions import *
+from pyspark.mllib.stat import Statistics
+from pyspark.ml.stat import ChiSquareTest
+from pyspark.sql import functions
+from pyspark.sql.functions import isnan, when, count, col
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as mplt
+import matplotlib.ticker as mtick
+
+#import the necessary libraries
+import os
+#import mlflow
+from pyspark.ml.regression import GeneralizedLinearRegression,RandomForestRegressor
+from pyspark.ml import Pipeline
+from pyspark.ml.classification import RandomForestClassifier, LogisticRegression, GBTClassifier
+from pyspark.ml.feature import VectorAssembler, StringIndexer, VectorIndexer, MinMaxScaler, VectorIndexer,StandardScaler,IndexToString
+from pyspark.ml.evaluation import BinaryClassificationEvaluator, RegressionEvaluator, MulticlassClassificationEvaluator
+from pyspark.ml import Pipeline
+#from databricks.feature_store import FeatureStoreClient
+#from databricks.feature_store import feature_table
 
 # COMMAND ----------
 
+# DBTITLE 1,Run this cell for clean storage
+# delete the old database and tables if needed
+_ = spark.sql('DROP DATABASE IF EXISTS bronze CASCADE')
+
+# drop any old delta lake files that might have been created
+dbutils.fs.rm('/mnt/bronze', recurse=True)
+dbutils.fs.rm('/mnt/gold', recurse=True)
+dbutils.fs.rm('/mnt/silver', recurse=True)
+dbutils.fs.rm('/mnt/checkpoint', recurse=True)
+# create database to house SQL tables
+_ = spark.sql('CREATE DATABASE bronze')
+
+# COMMAND ----------
+
+# DBTITLE 1,Use this to create some file/directory in mounted Azure storage
+dbutils.fs.put("/mnt/landing/hello_db.txt", "Hello, Databricks!", True)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC - Read CSV file from Landing Zone to a spark Dataframe
+# MAGIC - Write spark Dataframe to Delta Lake Format
+# MAGIC - Make Delta Lake query possible
+
+# COMMAND ----------
+
+# DBTITLE 1,Read CSV file from Landing Zone and Write Dataframe to Bronze Zone in Delta format
 # transaction dataset schema
 transaction_schema = StructType([
   StructField('msno', StringType()),
@@ -59,8 +120,8 @@ transaction_schema = StructType([
   StructField('is_cancel', IntegerType())  
   ])
 
-# read data from parquet
-transactions = (
+# read data from parquet/CSV
+transactions_df = (
   spark
     .read
     .csv(
@@ -71,8 +132,8 @@ transactions = (
       )
     )
 
-# persist in delta lake format
-( transactions
+# persist in delta lake format bronze zone
+( transactions_df
     .write
     .format('delta')
     .partitionBy('transaction_date')
@@ -86,26 +147,6 @@ spark.sql('''
   USING DELTA 
   LOCATION '/mnt/bronze/transactions'
   ''')
-
-# COMMAND ----------
-
-_ = spark.sql('CREATE DATABASE bronze')
-
-# COMMAND ----------
-
-# DBTITLE 1,Delete existing files
-#import shutil
-# pyspark.sql.types import *
-# delete the old database and tables if needed
-#_ = spark.sql('DROP DATABASE IF EXISTS bronze CASCADE')
-
-# drop any old delta lake files that might have been created
-#dbutils.fs.rm('/mnt/bronze', recurse=True)
-#dbutils.fs.rm('/mnt/gold', recurse=True)
-#dbutils.fs.rm('/mnt/silver', recurse=True)
-#dbutils.fs.rm('/mnt/checkpoint', recurse=True)
-# create database to house SQL tables
-#_ = spark.sql('CREATE DATABASE bronze')
 
 # COMMAND ----------
 
