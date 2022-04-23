@@ -544,7 +544,7 @@ display(member_dummy)
 
 # DBTITLE 1,Let's look at the version 0 - When the table was created
 # MAGIC %sql
-# MAGIC SELECT * FROM kkbox.members_gold VERSION AS OF 0
+# MAGIC SELECT * FROM gold.members_gold VERSION AS OF 0
 # MAGIC order by years
 
 # COMMAND ----------
