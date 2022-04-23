@@ -420,13 +420,13 @@ while i <= 6:
 
 # MAGIC %sql
 # MAGIC -- Running `DELETE` on the Delta Lake table to remove records from year 2009
-# MAGIC DELETE FROM kkbox.members_gold WHERE years = 2009
+# MAGIC DELETE FROM gold.members_gold WHERE years = 2009
 
 # COMMAND ----------
 
 # DBTITLE 1,Let's confirm the data is deleted for year 2009
 # MAGIC %sql
-# MAGIC SELECT * FROM kkbox.members_gold
+# MAGIC SELECT * FROM gold.members_gold
 # MAGIC ORDER BY years
 
 # COMMAND ----------
@@ -437,12 +437,12 @@ while i <= 6:
 
 # DBTITLE 1,Let's update the count for year 2010
 # MAGIC %sql
-# MAGIC UPDATE kkbox.members_gold SET `count` = 50000 WHERE years = 2010
+# MAGIC UPDATE gold.members_gold SET `count` = 50000 WHERE years = 2010
 
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC SELECT * FROM kkbox.members_gold
+# MAGIC SELECT * FROM gold.members_gold
 # MAGIC ORDER BY years
 
 # COMMAND ----------
@@ -471,7 +471,7 @@ display(merge_table)
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC MERGE INTO kkbox.members_gold as d
+# MAGIC MERGE INTO gold.members_gold as d
 # MAGIC USING merge_table as m
 # MAGIC on d.years = m.years
 # MAGIC WHEN MATCHED THEN 
@@ -483,7 +483,7 @@ display(merge_table)
 
 # DBTITLE 1,Perfect!! Let's check to make sure it worked
 # MAGIC %sql
-# MAGIC SELECT * FROM kkbox.members_gold
+# MAGIC SELECT * FROM gold.members_gold
 # MAGIC ORDER BY years
 
 # COMMAND ----------
