@@ -380,7 +380,7 @@ dbutils.notebook.exit("stop")
 # COMMAND ----------
 
 # Read the insertion of data
-members_gold_readStream = spark.readStream.format("delta").load('/mnt/adbquickstart/gold/members/')
+members_gold_readStream = spark.readStream.format("delta").load('/mnt/gold/members/')
 members_gold_readStream.createOrReplaceTempView("members_gold_readStream")
 
 # COMMAND ----------
@@ -398,7 +398,7 @@ import time
 i = 1
 while i <= 6:
   # Execute Insert statement
-  insert_sql = "INSERT INTO kkbox.members_gold VALUES (2004, 450000)"
+  insert_sql = "INSERT INTO gold.members_gold VALUES (2004, 450000)"
   spark.sql(insert_sql)
   print('members_gold_delta: inserted new row of data, loop: [%s]' % i)
     
