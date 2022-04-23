@@ -80,7 +80,7 @@ from pyspark.ml import Pipeline
 
 # COMMAND ----------
 
-# DBTITLE 1,Run this cell for clean storage
+# DBTITLE 1,Run this cell for cleaning storage/ fresh start
 # delete the old database and tables if needed
 _ = spark.sql('DROP DATABASE IF EXISTS bronze CASCADE')
 
@@ -94,59 +94,8 @@ _ = spark.sql('CREATE DATABASE bronze')
 
 # COMMAND ----------
 
-# DBTITLE 1,Use this to create some file/directory in mounted Azure storage
+# DBTITLE 1,Use this only to create some file/directory in mounted Azure storage
 dbutils.fs.put("/mnt/landing/hello_db.txt", "Hello, Databricks!", True)
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC - Read CSV file from Landing Zone to a spark Dataframe
-# MAGIC - Write spark Dataframe to Delta Lake Format
-# MAGIC - Make Delta Lake query possible
-
-# COMMAND ----------
-
-# DBTITLE 1,Read CSV file from Landing Zone and Write Dataframe to Bronze Zone in Delta format
-# transaction dataset schema
-transaction_schema = StructType([
-  StructField('msno', StringType()),
-  StructField('payment_method_id', IntegerType()),
-  StructField('payment_plan_days', IntegerType()),
-  StructField('plan_list_price', IntegerType()),
-  StructField('actual_amount_paid', IntegerType()),
-  StructField('is_auto_renew', IntegerType()),
-  StructField('transaction_date', DateType()),
-  StructField('membership_expire_date', DateType()),
-  StructField('is_cancel', IntegerType())  
-  ])
-
-# read data from parquet/CSV
-transactions_df = (
-  spark
-    .read
-    .csv(
-      '/mnt/landing/transactions_v2.csv',
-      schema=transaction_schema,
-      header=True,
-      dateFormat='yyyyMMdd'
-      )
-    )
-
-# persist in delta lake format bronze zone
-( transactions_df
-    .write
-    .format('delta')
-    .partitionBy('transaction_date')
-    .mode('overwrite')
-    .save('/mnt/bronze/transactions')
-  )
-
-# create table object to make delta lake queriable
-spark.sql('''
-  CREATE TABLE bronze.transactions
-  USING DELTA 
-  LOCATION '/mnt/bronze/transactions'
-  ''')
 
 # COMMAND ----------
 
@@ -161,7 +110,7 @@ spark.sql('''
 
 # COMMAND ----------
 
-# MAGIC %fs ls /mnt/adbquickstart/
+# MAGIC %fs ls /mnt/landing
 
 # COMMAND ----------
 
@@ -195,7 +144,14 @@ spark.sql('''
 
 # COMMAND ----------
 
-# DBTITLE 1,Prep Transactions Dataset - Parquet Files to Delta
+# MAGIC %md
+# MAGIC - Read CSV file from Landing Zone to a spark Dataframe
+# MAGIC - Write spark Dataframe to Delta Lake Format
+# MAGIC - Make Delta Lake query possible
+
+# COMMAND ----------
+
+# DBTITLE 1,Prep Transactions Dataset - Parquet/CSV Files to Delta, Read CSV file from Landing Zone and Write Dataframe to Bronze Zone in Delta format
 # Define transaction dataset schema
 transaction_schema = StructType([
   StructField('msno', StringType()),
@@ -210,11 +166,11 @@ transaction_schema = StructType([
   ])
 
 # Read data from parquet files
-transactions = (
+transactions_df = (
   spark
     .read
-    .parquet(
-      '/mnt/adbquickstart/transactions',
+    .csv(
+      '/mnt/landing/transactions_v2.csv',
       schema=transaction_schema,
       header=True,
       dateFormat='yyyyMMdd'
@@ -222,25 +178,26 @@ transactions = (
     )
 
 # persist in delta lake format
-( transactions
+( transactions_df
     .write
     .format('delta')
     .partitionBy('transaction_date')
     .mode('overwrite')
-    .save('/mnt/adbquickstart/bronze/transactions')
+    .save('/mnt/bronze/transactions')
   )
 
 # create table object to make delta lake queriable
 spark.sql('''
-  CREATE TABLE kkbox.transactions
+  CREATE TABLE bronze.transactions
   USING DELTA 
-  LOCATION '/mnt/adbquickstart/bronze/transactions'
+  LOCATION '/mnt/bronze/transactions'
   ''')
 
 # COMMAND ----------
 
+# DBTITLE 1,Query the SQL TABLE, Switch between the Table and Data Profile view
 # MAGIC %sql
-# MAGIC SELECT * FROM kkbox.transactions
+# MAGIC SELECT * FROM bronze.transactions
 
 # COMMAND ----------
 
