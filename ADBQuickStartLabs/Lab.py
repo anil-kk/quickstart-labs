@@ -354,13 +354,13 @@ display(members_gold)
 
 # DBTITLE 1,Query Gold table using file path
 # MAGIC %sql
-# MAGIC SELECT * from delta.`/mnt/adbquickstart/gold/members/`
+# MAGIC SELECT * FROM DELTA.`/mnt/gold/members/`
 
 # COMMAND ----------
 
-# DBTITLE 1,Query Gold table - 
+# DBTITLE 1,Query Gold table from DB
 # MAGIC %sql
-# MAGIC select * from kkbox.members_gold
+# MAGIC SELECT * FROM gold.members_gold
 
 # COMMAND ----------
 
