@@ -18,9 +18,9 @@
 
 # COMMAND ----------
 
-BLOB_CONTAINER  = dbutils.secrets.get(scope = "scope-storage-adb", key = "LH-BLOB-CONTAINER")
-BLOB_ACCOUNT = dbutils.secrets.get(scope = "scope-storage-adb", key = "LH-BLOB-ACCOUNT-NAME")
-ACCOUNT_KEY = dbutils.secrets.get(scope = "scope-storage-adb", key = "LH-ACCOUNT-KEY")
+BLOB_CONTAINER  = dbutils.secrets.get(scope = "shared-scope-storage-adb", key = "LH-BLOB-CONTAINER")
+BLOB_ACCOUNT = dbutils.secrets.get(scope = "shared-scope-storage-adb", key = "LH-BLOB-ACCOUNT-NAME")
+ACCOUNT_KEY = dbutils.secrets.get(scope = "shared-scope-storage-adb", key = "LH-ACCOUNT-KEY")
 
 # COMMAND ----------
 
